@@ -1,6 +1,9 @@
 
 package com.fundio.aichatbot.service;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.slf4j.Logger;
@@ -22,6 +25,7 @@ public class EmbeddingService {
         log.info("EmbeddingService initialized successfully");
     }
 
+    // Existing manual text storage method
     public void storeText(
             String text,
             String documentName,
@@ -39,12 +43,57 @@ public class EmbeddingService {
                     )
             );
 
-            vectorStore.add(java.util.List.of(document));
+            vectorStore.add(List.of(document));
 
             log.info("Document embedding stored successfully");
 
         } catch (Exception e) {
             log.error("Failed to store document embedding", e);
+            throw e;
+        }
+    }
+
+    // New method for storing multiple PDF text chunks
+    public int storeChunks(
+            List<String> chunks,
+            String documentName,
+            Integer pageNumber) {
+
+        if (chunks == null || chunks.isEmpty()) {
+            throw new IllegalArgumentException(
+                    "No text chunks available for storage");
+        }
+
+        log.info("Storing {} chunks. Document: {}, Page: {}",
+                chunks.size(), documentName, pageNumber);
+
+        try {
+            List<Document> documents = new ArrayList<>();
+
+            for (int i = 0; i < chunks.size(); i++) {
+
+                Map<String, Object> metadata = new HashMap<>();
+
+                metadata.put("documentName", documentName);
+                metadata.put("pageNumber", pageNumber);
+                metadata.put("chunkNumber", i + 1);
+
+                Document document = new Document(
+                        chunks.get(i),
+                        metadata
+                );
+
+                documents.add(document);
+            }
+
+            vectorStore.add(documents);
+
+            log.info("{} chunks stored successfully", documents.size());
+
+            return documents.size();
+
+        } catch (Exception e) {
+            log.error("Failed to store document chunks", e);
             throw e;
         }
     }
